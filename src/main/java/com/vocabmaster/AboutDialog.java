@@ -1,3 +1,5 @@
+package com.vocabmaster;
+
 import javax.swing.*;
 import java.awt.*;
 

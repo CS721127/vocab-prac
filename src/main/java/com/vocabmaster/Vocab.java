@@ -1,3 +1,5 @@
+package com.vocabmaster;
+
 import java.io.*;
 
 class Vocab implements Serializable {

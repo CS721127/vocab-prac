@@ -2,6 +2,20 @@
 
 Vocab Master is a lightweight, local-first Java Swing application designed to help you build, study, and master vocabulary effectively. 
 
+## 🚀 Quick Start / Download
+
+**Windows Users**: [Click here to download the `.exe` installer](https://github.com/CS721127/vocab-master/releases/latest) - Download and double click to run.
+*(Note: If Windows Defender prompts "Windows protected your PC", click **More Info -> Run Anyway**)*
+
+**Mac Users**: [Click here to download the `.dmg` binary](https://github.com/CS721127/vocab-master/releases/latest) - Download, open, and drag to Applications.
+*(Note: If macOS Gatekeeper blocks it, Right-click the app and choose **Open** to bypass)*
+
+**Portable ZIPs (App-Image)**: Both `.zip` app-images are available on the release page if you don't want to install.
+
+*No Java installation required! The runtime is completely bundled into the installers.*
+
+---
+
 ## ✨ Features
 
 - **Practice Mode**: Test your knowledge in Sequential, Reversed, or Random orders.
@@ -15,19 +29,19 @@ Vocab Master is a lightweight, local-first Java Swing application designed to he
   - Import raw terms from MDX database tab-delimited exports.
 - **Smart UI Truncation**: Easily view deeply nested long definitions with a simple "double-click to expand modal" overlay.
 
-## 🚀 Getting Started
+## 🛠 For Developers (Build & Run)
+
+Vocab Master uses a modern strict zero-dependency Maven configuration. To build from source:
 
 ### Prerequisites
-- **Java SE Development Kit (JDK) 8+** (or newer) needs to be installed on your machine.
-
-### Build and Run
-1. Clone the repository or navigate to the source directory.
-2. Compile and run the project via the terminal:
+- JDK 21+
+- Apache Maven
 
 ```bash
-javac *.java
-java SwingApp
+mvn clean package
 ```
+This generates an executable shade-jar `target/vocab-master-X.X.X.jar`.
+To package natively, push a git tag `v...` and the GitHub Actions will automatically compile `.exe`, `.msi`, `.dmg`, and app-images via `jpackage`.
 
 ### Configuring AI Features (Google Gemma API)
 1. Within the Vocab Master window, click on **File > Settings**.

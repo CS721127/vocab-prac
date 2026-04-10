@@ -1,22 +1,44 @@
-# === Java compile ===
+# === Java & Maven ===
+target/
 *.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
 
-# === packing ===
-VocabApp.jar
-dist/
+# === Node / Next.js (Web App) ===
+web-app/node_modules/
+web-app/.next/
+web-app/out/
+web-app/build/
+web-app/.env.local
+web-app/.env.*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
 # === OS ===
 .DS_Store
+.AppleDouble
+.LSOverride
 Thumbs.db
 Desktop.ini
 
 # === IDE Config ===
 .idea/
 *.iml
+*.iws
 .vscode/
 .project
 .classpath
 .settings/
+.factorypath
 
+# === Logs & Tmp ===
 *.log
 *.tmp
+*.bak
+*.swp

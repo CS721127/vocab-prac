@@ -1,3 +1,5 @@
+package com.vocabmaster;
+
 import java.io.*;
 import java.util.*;
 
@@ -479,7 +481,15 @@ class VSystem {
 
     @SuppressWarnings("unchecked")
     private void loadEvents() {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fileName))) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fileName)) {
+            @Override
+            protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+                if (desc.getName().equals("Vocab")) {
+                    return com.vocabmaster.Vocab.class;
+                }
+                return super.resolveClass(desc);
+            }
+        }) {
             vocabs = (ArrayList<Vocab>) ois.readObject();
         } catch (FileNotFoundException e) {
             // First run — no file yet
