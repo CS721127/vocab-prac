@@ -1,0 +1,63 @@
+name: Build and Release Vocab Master
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          
+      - name: Build with Maven
+        run: mvn clean package
+        
+      - name: Package Mac (DMG & App Image)
+        if: matrix.os == 'macos-latest'
+        run: |
+          jpackage --name "Vocab Master" --input target/ --main-jar vocab-master-1.0.0.jar --type dmg --icon icons/icon.icns
+          jpackage --name "Vocab Master" --input target/ --main-jar vocab-master-1.0.0.jar --type app-image --icon icons/icon.icns
+          zip -r VocabMaster-macOS-AppImage.zip "Vocab Master.app"
+          
+      - name: Package Windows (EXE, MSI & App Image)
+        if: matrix.os == 'windows-latest'
+        run: |
+          jpackage --name "Vocab Master" --input target/ --main-jar vocab-master-1.0.0.jar --type exe --win-dir-chooser --win-shortcut --win-menu --icon icons/icon.ico
+          jpackage --name "Vocab Master" --input target/ --main-jar vocab-master-1.0.0.jar --type msi --win-dir-chooser --win-shortcut --win-menu --icon icons/icon.ico
+          jpackage --name "Vocab Master" --input target/ --main-jar vocab-master-1.0.0.jar --type app-image --icon icons/icon.ico
+          Compress-Archive -Path "Vocab Master" -DestinationPath VocabMaster-Windows-AppImage.zip
+        shell: pwsh
+
+      - name: Upload Artifacts (Mac DMG)
+        if: matrix.os == 'macos-latest'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            *.dmg
+            VocabMaster-macOS-AppImage.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Artifacts (Windows EXE & MSI)
+        if: matrix.os == 'windows-latest'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            *.exe
+            *.msi
+            VocabMaster-Windows-AppImage.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
