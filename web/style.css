@@ -1,0 +1,121 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f5;
+    color: #333;
+}
+
+header {
+    background-color: #007aff;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 { margin: 0; font-size: 1.2rem; }
+
+button {
+    border: none;
+    background: none;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.primary {
+    background-color: #007aff;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+}
+
+.secondary {
+    color: #007aff;
+}
+
+.toolbar {
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+}
+
+#list-container {
+    padding: 10px;
+}
+
+.vocab-item {
+    background: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.vocab-term { font-weight: bold; font-size: 1.1rem; }
+.vocab-def { color: #555; }
+.vocab-notes { color: #888; font-size: 0.9rem; margin-top: 5px; }
+
+/* Dialogs */
+.dialog {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hidden { display: none; }
+
+.dialog-content {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    width: 80%;
+    max-width: 400px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+/* Practice */
+#view-practice {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #f0f0f5;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.practice-card {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+#lblFeedback {
+    height: 20px;
+    margin: 10px 0;
+    font-weight: bold;
+}

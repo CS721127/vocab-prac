@@ -1,0 +1,22 @@
+# === Java compile ===
+*.class
+
+# === packing ===
+VocabApp.jar
+dist/
+
+# === OS ===
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# === IDE Config ===
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+*.log
+*.tmp
