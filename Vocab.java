@@ -2,31 +2,49 @@ import java.io.*;
 
 class Vocab implements Serializable {
     private static final long serialVersionUID = 1L;
-    private String term; 
+    private String term;
     private String definition;
-    private String notes; 
+    private String notes;
+    private String example; // New: example sentence
 
     public Vocab(String term, String definition, String notes) {
-        this.definition = definition;
         this.term = term;
+        this.definition = definition;
         this.notes = notes;
+        this.example = "";
     }
 
-    public String getTerm() {
-        return term;
+    public Vocab(String term, String definition, String notes, String example) {
+        this.term = term;
+        this.definition = definition;
+        this.notes = notes;
+        this.example = (example != null) ? example : "";
     }
 
-    public String getDefinition() {
-        return definition;
-    }
-    
-    public String getNotes() {
-        return notes;
+    // Getters
+    public String getTerm()       { return term; }
+    public String getDefinition() { return definition; }
+    public String getNotes()      { return notes; }
+    public String getExample()    { return (example != null) ? example : ""; }
+
+    // Setters (for AI enhancement)
+    public void setDefinition(String definition) { this.definition = definition; }
+    public void setExample(String example)       { this.example = (example != null) ? example : ""; }
+    public void setNotes(String notes)           { this.notes = notes; }
+
+    /**
+     * Custom deserialization for backward compatibility with serialVersionUID=1L files.
+     * Old files won't have the 'example' field — default it to empty string.
+     */
+    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        ois.defaultReadObject();
+        if (example == null) {
+            example = "";
+        }
     }
 
     @Override
     public String toString() {
-        // Use String.format for cleaner alignment: Term (20 chars), Definition (30 chars), Notes (rest)
         return String.format("%-20s %-30s %s", term, definition, notes);
     }
 }

@@ -5,7 +5,7 @@ import java.util.Properties;
 
 public class SettingsDialog extends JDialog {
     private JComboBox<String> comboLang;
-    private JCheckBox checkDark;
+    private JPasswordField txtApiKey;
     private File configFile;
     private Properties props;
     private SwingApp app;
@@ -13,9 +13,10 @@ public class SettingsDialog extends JDialog {
     public SettingsDialog(JFrame parent, SwingApp app) {
         super(parent, "Settings", true);
         this.app = app;
-        setSize(300, 200);
+        setSize(460, 260);
         setLocationRelativeTo(parent);
-        setLayout(new GridLayout(4, 1, 10, 10));
+        setLayout(new BorderLayout(10, 10));
+        getRootPane().setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
 
         // Load Config
         String userHome = System.getProperty("user.home");
@@ -23,33 +24,50 @@ public class SettingsDialog extends JDialog {
         props = new Properties();
         loadConfig();
 
-        // Language
-        JPanel pnlLang = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        pnlLang.add(new JLabel("Language: "));
-        String[] langs = {"English", "Chinese"};
+        JPanel form = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(6, 6, 6, 6);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+
+        // ── Language ──────────────────────────────────────────────────────────
+        gbc.gridy = 0; gbc.gridx = 0; gbc.weightx = 0.3;
+        form.add(new JLabel("Language:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 0.7;
+        String[] langs = { "English", "中文 (Chinese)" };
         comboLang = new JComboBox<>(langs);
-        if (props.getProperty("language", "en").equals("cn")) {
-            comboLang.setSelectedIndex(1);
-        }
-        pnlLang.add(comboLang);
-        add(pnlLang);
+        if (props.getProperty("language", "en").equals("cn")) comboLang.setSelectedIndex(1);
+        form.add(comboLang, gbc);
 
-        // Theme (Placeholder for now, just saves preference)
-        JPanel pnlTheme = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        checkDark = new JCheckBox("Dark Mode (Restart required)");
-        checkDark.setSelected(Boolean.parseBoolean(props.getProperty("dark_mode", "false")));
-        pnlTheme.add(checkDark);
-        add(pnlTheme);
+        // ── Gemma API Key ──────────────────────────────────────────────────────
+        gbc.gridy = 1; gbc.gridx = 0; gbc.weightx = 0.3;
+        form.add(new JLabel("Gemma API Key:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 0.7;
+        txtApiKey = new JPasswordField();
+        String existingKey = props.getProperty("ai.api_key", "");
+        txtApiKey.setText(existingKey);
+        txtApiKey.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        form.add(txtApiKey, gbc);
 
-        // Buttons
-        JPanel pnlBtn = new JPanel();
+        // Hint
+        gbc.gridy = 2; gbc.gridx = 0; gbc.gridwidth = 2;
+        JLabel hint = new JLabel("<html><font color='gray' size='2'>Get your key at: <a href=''>https://aistudio.google.com/</a><br>Used for AI Enhance and AI Search features.</font></html>");
+        hint.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        form.add(hint, gbc);
+        gbc.gridwidth = 1;
+
+        add(form, BorderLayout.CENTER);
+
+        // ── Buttons ───────────────────────────────────────────────────────────
+        JPanel pnlBtn = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         JButton btnSave = new JButton("Save");
+        btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
         btnSave.addActionListener(e -> saveSettings());
         JButton btnCancel = new JButton("Cancel");
         btnCancel.addActionListener(e -> dispose());
-        pnlBtn.add(btnSave);
         pnlBtn.add(btnCancel);
-        add(pnlBtn);
+        pnlBtn.add(btnSave);
+        add(pnlBtn, BorderLayout.SOUTH);
 
         setVisible(true);
     }
@@ -67,18 +85,23 @@ public class SettingsDialog extends JDialog {
     private void saveSettings() {
         String lang = comboLang.getSelectedIndex() == 0 ? "en" : "cn";
         props.setProperty("language", lang);
-        props.setProperty("dark_mode", String.valueOf(checkDark.isSelected()));
 
+        String apiKey = new String(txtApiKey.getPassword()).trim();
+        if (!apiKey.isEmpty()) {
+            props.setProperty("ai.api_key", apiKey);
+        } else {
+            props.remove("ai.api_key");
+        }
+
+        configFile.getParentFile().mkdirs();
         try (FileOutputStream out = new FileOutputStream(configFile)) {
             props.store(out, "VocabMaster Settings");
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        // Apply Language Immediately
         LanguageManager.setLanguage(lang.equals("en"));
         app.updateUIText();
-        
         dispose();
     }
 }
