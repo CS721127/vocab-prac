@@ -144,7 +144,8 @@ class VSystem {
 
     public boolean checkTermToDef(String term, String definition) {
         for (Vocab vocab : vocabs) {
-            if (vocab.getTerm().equalsIgnoreCase(term) && vocab.getDefinition().toLowerCase().contains(definition.toLowerCase())) {
+            if (vocab.getTerm().equalsIgnoreCase(term)
+                    && vocab.getDefinition().toLowerCase().contains(definition.toLowerCase())) {
                 return true;
             }
         }
@@ -163,7 +164,8 @@ class VSystem {
 
     public boolean checkTermToDefInList(List<Vocab> list, String term, String definition) {
         for (Vocab vocab : list) {
-            if (vocab.getTerm().equalsIgnoreCase(term) && vocab.getDefinition().toLowerCase().contains(definition.toLowerCase())) {
+            if (vocab.getTerm().equalsIgnoreCase(term)
+                    && vocab.getDefinition().toLowerCase().contains(definition.toLowerCase())) {
                 return true;
             }
         }
@@ -175,19 +177,72 @@ class VSystem {
     /**
      * Import from CSV or tab-delimited file.
      * Supported formats:
-     *   CSV:  term,definition,example,notes  (with optional header row)
-     *   TSV:  term\tdefinition\texample\tnotes
-     *   MDX-style: term\tdefinition  (2 columns)
+     * CSV: term,definition,example,notes (with optional header row)
+     * TSV: term\tdefinition\texample\tnotes
+     * MDX-style: term\tdefinition (2 columns)
      * Returns the number of imported items.
      */
+    /**
+     * Detect the charset of a file by checking for a BOM or falling back to
+     * UTF-8. MDX tab-delimited exports are commonly UTF-16LE (with BOM) or
+     * GBK; we handle the most frequent cases automatically.
+     */
+    private java.nio.charset.Charset detectCharset(File file) throws IOException {
+        try (FileInputStream fis = new FileInputStream(file)) {
+            byte[] bom = new byte[4];
+            int read = fis.read(bom);
+            if (read >= 2) {
+                // UTF-16 LE BOM: FF FE
+                if ((bom[0] & 0xFF) == 0xFF && (bom[1] & 0xFF) == 0xFE) {
+                    return java.nio.charset.StandardCharsets.UTF_16LE;
+                }
+                // UTF-16 BE BOM: FE FF
+                if ((bom[0] & 0xFF) == 0xFE && (bom[1] & 0xFF) == 0xFF) {
+                    return java.nio.charset.StandardCharsets.UTF_16BE;
+                }
+            }
+            if (read >= 3) {
+                // UTF-8 BOM: EF BB BF
+                if ((bom[0] & 0xFF) == 0xEF && (bom[1] & 0xFF) == 0xBB && (bom[2] & 0xFF) == 0xBF) {
+                    return java.nio.charset.StandardCharsets.UTF_8;
+                }
+            }
+        }
+        // Default: UTF-8; if that fails the caller can retry with GBK
+        return java.nio.charset.StandardCharsets.UTF_8;
+    }
+
     public int importFromFile(File file) throws IOException {
+        java.nio.charset.Charset charset = detectCharset(file);
+        int count = tryImportWithCharset(file, charset);
+        // If UTF-8 produced no results and the file isn't tiny, retry with GBK
+        // (common for Chinese MDX exports from tools like MDict)
+        if (count == 0 && file.length() > 100 &&
+                charset == java.nio.charset.StandardCharsets.UTF_8) {
+            try {
+                count = tryImportWithCharset(file, java.nio.charset.Charset.forName("GBK"));
+            } catch (Exception ignored) {
+                // GBK not available on this JVM — give up silently
+            }
+        }
+        return count;
+    }
+
+    private int tryImportWithCharset(File file, java.nio.charset.Charset charset) throws IOException {
         int count = 0;
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"))) {
+        // Large buffer (64 KB) for fast reading of big MDX exports
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(new FileInputStream(file), charset), 65536)) {
             String line;
             boolean firstLine = true;
             while ((line = br.readLine()) != null) {
+                // Strip BOM character that some readers leave in the first line
+                if (firstLine && line.startsWith("\uFEFF")) {
+                    line = line.substring(1);
+                }
                 line = line.trim();
-                if (line.isEmpty()) continue;
+                if (line.isEmpty())
+                    continue;
 
                 // Detect delimiter
                 String[] parts;
@@ -200,20 +255,22 @@ class VSystem {
                 // Skip header if detected
                 if (firstLine) {
                     firstLine = false;
-                    if (parts.length > 0 && (
-                            parts[0].equalsIgnoreCase("term") ||
+                    if (parts.length > 0 && (parts[0].equalsIgnoreCase("term") ||
                             parts[0].equalsIgnoreCase("word") ||
                             parts[0].equalsIgnoreCase("词汇") ||
                             parts[0].equalsIgnoreCase("Term"))) {
                         continue; // skip header row
                     }
+                } else {
+                    firstLine = false;
                 }
 
-                if (parts.length < 2) continue; // need at least term + definition
+                if (parts.length < 2)
+                    continue; // need at least term + definition
 
-                String term  = parts[0].trim();
-                String def   = parts.length > 1 ? parts[1].trim() : "";
-                String ex    = parts.length > 2 ? parts[2].trim() : "";
+                String term = parts[0].trim();
+                String def = parts.length > 1 ? parts[1].trim() : "";
+                String ex = parts.length > 2 ? parts[2].trim() : "";
                 String notes = parts.length > 3 ? parts[3].trim() : "";
 
                 if (!term.isEmpty() && !def.isEmpty()) {
@@ -256,18 +313,18 @@ class VSystem {
             pw.println("Term,Definition,Example,Notes");
             for (Vocab v : vocabs) {
                 pw.println(
-                    csvEscape(v.getTerm()) + "," +
-                    csvEscape(v.getDefinition()) + "," +
-                    csvEscape(v.getExample()) + "," +
-                    csvEscape(v.getNotes())
-                );
+                        csvEscape(v.getTerm()) + "," +
+                                csvEscape(v.getDefinition()) + "," +
+                                csvEscape(v.getExample()) + "," +
+                                csvEscape(v.getNotes()));
             }
         }
     }
 
     /** Escapes a value for CSV output. */
     private String csvEscape(String value) {
-        if (value == null) return "\"\"";
+        if (value == null)
+            return "\"\"";
         if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
             return "\"" + value.replace("\"", "\"\"") + "\"";
         }
@@ -286,11 +343,14 @@ class VSystem {
             pw.println("<meta charset=\"UTF-8\">");
             pw.println("<title>" + escapeHtml(listTitle) + " — Vocab Master</title>");
             pw.println("<style>");
-            pw.println("  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');");
+            pw.println(
+                    "  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');");
             pw.println("  * { box-sizing: border-box; margin: 0; padding: 0; }");
-            pw.println("  body { font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 11pt; color: #1a1a2e; background: #fff; }");
+            pw.println(
+                    "  body { font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 11pt; color: #1a1a2e; background: #fff; }");
             pw.println("  .page { max-width: 210mm; margin: 0 auto; padding: 20mm 18mm; }");
-            pw.println("  h1 { font-size: 22pt; font-weight: 700; color: #2a2a5a; border-bottom: 3px solid #4f46e5; padding-bottom: 8px; margin-bottom: 6px; }");
+            pw.println(
+                    "  h1 { font-size: 22pt; font-weight: 700; color: #2a2a5a; border-bottom: 3px solid #4f46e5; padding-bottom: 8px; margin-bottom: 6px; }");
             pw.println("  .subtitle { font-size: 10pt; color: #6b6b8a; margin-bottom: 18px; }");
             pw.println("  table { width: 100%; border-collapse: collapse; font-size: 10.5pt; }");
             pw.println("  thead tr { background: #4f46e5; color: #fff; }");
@@ -312,12 +372,15 @@ class VSystem {
             pw.println("</style>");
             pw.println("</head>");
             pw.println("<body>");
-            pw.println("<div class='no-print' style='background:#4f46e5;color:#fff;padding:10px 18px;font-family:Inter,sans-serif;font-size:11pt'>");
-            pw.println("  📄 <strong>Print to PDF:</strong> Press <kbd style='background:#fff;color:#000;padding:2px 6px;border-radius:3px'>Ctrl+P</kbd> (or ⌘P on Mac) → <em>Save as PDF</em>");
+            pw.println(
+                    "<div class='no-print' style='background:#4f46e5;color:#fff;padding:10px 18px;font-family:Inter,sans-serif;font-size:11pt'>");
+            pw.println(
+                    "  📄 <strong>Print to PDF:</strong> Press <kbd style='background:#fff;color:#000;padding:2px 6px;border-radius:3px'>Ctrl+P</kbd> (or ⌘P on Mac) → <em>Save as PDF</em>");
             pw.println("</div>");
             pw.println("<div class='page'>");
             pw.println("  <h1>" + escapeHtml(listTitle) + "</h1>");
-            pw.println("  <div class='subtitle'>Generated by Vocab Master · " + new java.util.Date() + " · " + vocabs.size() + " words</div>");
+            pw.println("  <div class='subtitle'>Generated by Vocab Master · " + new java.util.Date() + " · "
+                    + vocabs.size() + " words</div>");
             pw.println("  <table>");
             pw.println("    <thead><tr>");
             pw.println("      <th style='width:18%'>Term</th>");
@@ -344,7 +407,8 @@ class VSystem {
     }
 
     private String escapeHtml(String s) {
-        if (s == null) return "";
+        if (s == null)
+            return "";
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 
@@ -359,7 +423,8 @@ class VSystem {
             for (int i = 0; i < vocabs.size(); i++) {
                 System.out.println("\n" + vocabs.get(i).getDefinition() + "\t" + vocabs.get(i).getNotes());
                 a = scan.nextLine();
-                if (a.equals("sc")) break;
+                if (a.equals("sc"))
+                    break;
                 if (checkDefToTerm(vocabs.get(i).getDefinition(), a)) {
                     System.out.println("Good! Correct!");
                 } else {
@@ -372,7 +437,8 @@ class VSystem {
             for (int i = vocabs.size() - 1; i >= 0; i--) {
                 System.out.println("\n" + vocabs.get(i).getDefinition() + "\t" + vocabs.get(i).getNotes());
                 a = scan.nextLine();
-                if (a.equals("sc")) break;
+                if (a.equals("sc"))
+                    break;
                 if (checkDefToTerm(vocabs.get(i).getDefinition(), a)) {
                     System.out.println("Good! Correct!");
                 } else {
@@ -389,7 +455,8 @@ class VSystem {
                     check.add(b);
                     System.out.println("\n" + vocabs.get(b).getDefinition() + "\t" + vocabs.get(b).getNotes());
                     a = scan.nextLine();
-                    if (a.equals("sc")) break;
+                    if (a.equals("sc"))
+                        break;
                     if (checkDefToTerm(vocabs.get(b).getDefinition(), a)) {
                         System.out.println("Good! Correct!");
                     } else {
@@ -401,8 +468,12 @@ class VSystem {
             }
         }
         System.out.println("\nWrong: ");
-        if (wrong.isEmpty()) System.out.println("N/A");
-        else for (Vocab voc : wrong) if (voc.getTerm() != null) System.out.println(voc);
+        if (wrong.isEmpty())
+            System.out.println("N/A");
+        else
+            for (Vocab voc : wrong)
+                if (voc.getTerm() != null)
+                    System.out.println(voc);
     }
 
     public void game2(String mode) {
@@ -413,7 +484,8 @@ class VSystem {
             for (int i = 0; i < vocabs.size(); i++) {
                 System.out.println("\n" + vocabs.get(i).getTerm() + "\t" + vocabs.get(i).getNotes());
                 c = scan.nextLine();
-                if (c.equals("sc")) break;
+                if (c.equals("sc"))
+                    break;
                 if (checkTermToDef(vocabs.get(i).getTerm(), c)) {
                     System.out.println("Good! Correct!");
                 } else {
@@ -426,7 +498,8 @@ class VSystem {
             for (int i = vocabs.size() - 1; i >= 0; i--) {
                 System.out.println("\n" + vocabs.get(i).getTerm() + "\t" + vocabs.get(i).getNotes());
                 c = scan.nextLine();
-                if (c.equals("sc")) break;
+                if (c.equals("sc"))
+                    break;
                 if (checkTermToDef(vocabs.get(i).getTerm(), c)) {
                     System.out.println("Good! Correct!");
                 } else {
@@ -443,7 +516,8 @@ class VSystem {
                     check.add(b);
                     System.out.println("\n" + vocabs.get(b).getTerm() + "\t" + vocabs.get(b).getNotes());
                     c = scan.nextLine();
-                    if (c.equals("sc")) break;
+                    if (c.equals("sc"))
+                        break;
                     if (checkTermToDef(vocabs.get(b).getTerm(), c)) {
                         System.out.println("Good! Correct!");
                     } else {
@@ -455,18 +529,29 @@ class VSystem {
             }
         }
         System.out.println("\nWrong: ");
-        if (wrong.isEmpty()) System.out.print("N/A");
-        else for (Vocab voc : wrong) if (voc.getTerm() != null) System.out.println(voc);
+        if (wrong.isEmpty())
+            System.out.print("N/A");
+        else
+            for (Vocab voc : wrong)
+                if (voc.getTerm() != null)
+                    System.out.println(voc);
     }
 
     // ── ACCESSORS ─────────────────────────────────────────────────────────────
 
-    public List<Vocab> getVocabs()  { return vocabs; }
-    public List<Vocab> getWrongs() { return wrong; }
+    public List<Vocab> getVocabs() {
+        return vocabs;
+    }
+
+    public List<Vocab> getWrongs() {
+        return wrong;
+    }
 
     // ── PERSISTENCE ───────────────────────────────────────────────────────────
 
-    /** Public save trigger — needed after in-place mutations (e.g. AI enhancement). */
+    /**
+     * Public save trigger — needed after in-place mutations (e.g. AI enhancement).
+     */
     public void forceSave() {
         saveEvents();
     }

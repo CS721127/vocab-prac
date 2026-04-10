@@ -12,13 +12,13 @@ import java.util.Map;
  * SwingApp — Main UI for Vocab Master.
  *
  * New features:
- *  - 4-column table: Term, Definition, Example, Notes
- *  - Definition column truncated at 80 chars; click row to expand full detail
- *  - Search bar: searches locally; if no result offers AI (Qwen) search
- *  - Export to CSV (Excel) and to printable HTML (PDF)
- *  - Import from CSV/Excel and MDX-style tab-delimited files
- *  - AI Enhance button: enhances all vocab definitions + adds examples
- *  - Practice mode (GameDialog) with order selection + wrong-word retry
+ * - 4-column table: Term, Definition, Example, Notes
+ * - Definition column truncated at 80 chars; click row to expand full detail
+ * - Search bar: searches locally; if no result offers AI (Qwen) search
+ * - Export to CSV (Excel) and to printable HTML (PDF)
+ * - Import from CSV/Excel and MDX-style tab-delimited files
+ * - AI Enhance button: enhances all vocab definitions + adds examples
+ * - Practice mode (GameDialog) with order selection + wrong-word retry
  */
 public class SwingApp {
     private VSystem sys;
@@ -76,7 +76,7 @@ public class SwingApp {
         frame.setLocationRelativeTo(null);
 
         buildMenuBar();
-        buildTopPanel();   // toolbar + search bar
+        buildTopPanel(); // toolbar + search bar
         buildTable();
         buildStatusBar();
 
@@ -218,7 +218,10 @@ public class SwingApp {
 
     private void buildTable() {
         tableModel = new DefaultTableModel(0, 4) {
-            @Override public boolean isCellEditable(int row, int col) { return false; }
+            @Override
+            public boolean isCellEditable(int row, int col) {
+                return false;
+            }
         };
 
         table = new JTable(tableModel);
@@ -232,22 +235,25 @@ public class SwingApp {
         table.setIntercellSpacing(new Dimension(1, 1));
 
         // Column widths
-        table.getColumnModel().getColumn(0).setPreferredWidth(160);  // Term
-        table.getColumnModel().getColumn(1).setPreferredWidth(300);  // Definition
-        table.getColumnModel().getColumn(2).setPreferredWidth(240);  // Example
-        table.getColumnModel().getColumn(3).setPreferredWidth(120);  // Notes
+        table.getColumnModel().getColumn(0).setPreferredWidth(160); // Term
+        table.getColumnModel().getColumn(1).setPreferredWidth(300); // Definition
+        table.getColumnModel().getColumn(2).setPreferredWidth(240); // Example
+        table.getColumnModel().getColumn(3).setPreferredWidth(120); // Notes
 
-        // Custom renderer for truncated definition column (col 1) and example col (col 2)
+        // Custom renderer for truncated definition column (col 1) and example col (col
+        // 2)
         TruncatedCellRenderer truncRenderer = new TruncatedCellRenderer(DEF_TRUNCATE);
         table.getColumnModel().getColumn(1).setCellRenderer(truncRenderer);
         table.getColumnModel().getColumn(2).setCellRenderer(new TruncatedCellRenderer(60));
 
         // Double-click to expand detail dialog
         table.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
+            @Override
+            public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
                     int row = table.rowAtPoint(e.getPoint());
-                    if (row >= 0) showDetailDialog(row);
+                    if (row >= 0)
+                        showDetailDialog(row);
                 }
             }
         });
@@ -294,11 +300,11 @@ public class SwingApp {
 
         statusLabel.setText(LanguageManager.get("status.ready"));
 
-        columnNames = new String[]{
-            LanguageManager.get("col.term"),
-            LanguageManager.get("col.def"),
-            LanguageManager.get("col.example"),
-            LanguageManager.get("col.notes")
+        columnNames = new String[] {
+                LanguageManager.get("col.term"),
+                LanguageManager.get("col.def"),
+                LanguageManager.get("col.example"),
+                LanguageManager.get("col.notes")
         };
         tableModel.setColumnIdentifiers(columnNames);
     }
@@ -322,11 +328,11 @@ public class SwingApp {
     private void refreshTableWith(List<Vocab> list) {
         tableModel.setRowCount(0);
         for (Vocab v : list) {
-            tableModel.addRow(new Object[]{
-                v.getTerm(),
-                v.getDefinition(),
-                v.getExample(),
-                v.getNotes()
+            tableModel.addRow(new Object[] {
+                    v.getTerm(),
+                    v.getDefinition(),
+                    v.getExample(),
+                    v.getNotes()
             });
         }
     }
@@ -353,14 +359,13 @@ public class SwingApp {
             return;
         }
         String selected = (String) JOptionPane.showInputDialog(
-            frame,
-            LanguageManager.get("menu.open_list"),
-            LanguageManager.get("menu.open_list"),
-            JOptionPane.QUESTION_MESSAGE,
-            null,
-            lists.toArray(),
-            currentListName
-        );
+                frame,
+                LanguageManager.get("menu.open_list"),
+                LanguageManager.get("menu.open_list"),
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                lists.toArray(),
+                currentListName);
         if (selected != null) {
             currentListName = selected;
             sys = new VSystem(currentListName);
@@ -373,14 +378,13 @@ public class SwingApp {
     private void importPreset() {
         Map<String, List<Vocab>> presets = PresetLists.getPresets();
         String selected = (String) JOptionPane.showInputDialog(
-            frame,
-            LanguageManager.get("menu.import"),
-            LanguageManager.get("menu.import"),
-            JOptionPane.QUESTION_MESSAGE,
-            null,
-            presets.keySet().toArray(),
-            null
-        );
+                frame,
+                LanguageManager.get("menu.import"),
+                LanguageManager.get("menu.import"),
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                presets.keySet().toArray(),
+                null);
         if (selected != null) {
             currentListName = selected;
             sys = new VSystem(currentListName);
@@ -410,8 +414,8 @@ public class SwingApp {
                 JOptionPane.showMessageDialog(frame, LanguageManager.get("import.success", count));
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(frame,
-                    LanguageManager.get("import.error", ex.getMessage()),
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                        LanguageManager.get("import.error", ex.getMessage()),
+                        "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -420,18 +424,36 @@ public class SwingApp {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle(LanguageManager.get("menu.import_mdx"));
         chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
-            "Tab-delimited text (*.txt, *.tsv)", "txt", "tsv"));
+                "MDX / Tab-delimited (*.mdx, *.txt, *.tsv)", "mdx", "txt", "tsv"));
+        chooser.setAcceptAllFileFilterUsed(true);
         if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
             File file = chooser.getSelectedFile();
-            try {
-                int count = sys.importFromFile(file);
-                refreshTable();
-                JOptionPane.showMessageDialog(frame, LanguageManager.get("import.success", count));
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(frame,
-                    LanguageManager.get("import.error", ex.getMessage()),
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            }
+
+            JDialog progressDialog = new JDialog(frame, "Importing...", false);
+            JLabel progressLabel = new JLabel("  Reading file, please wait...  ");
+            progressLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            progressDialog.add(progressLabel);
+            progressDialog.pack();
+            progressDialog.setLocationRelativeTo(frame);
+            progressDialog.setVisible(true);
+
+            new Thread(() -> {
+                try {
+                    int count = sys.importFromFile(file);
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        progressDialog.dispose();
+                        refreshTable();
+                        JOptionPane.showMessageDialog(frame, LanguageManager.get("import.success", count));
+                    });
+                } catch (Exception ex) {
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        progressDialog.dispose();
+                        JOptionPane.showMessageDialog(frame,
+                                LanguageManager.get("import.error", ex.getMessage()),
+                                "Error", JOptionPane.ERROR_MESSAGE);
+                    });
+                }
+            }, "mdx-import-thread").start();
         }
     }
 
@@ -449,8 +471,8 @@ public class SwingApp {
                 JOptionPane.showMessageDialog(frame, LanguageManager.get("export.success", file.getAbsolutePath()));
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(frame,
-                    LanguageManager.get("export.error", ex.getMessage()),
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                        LanguageManager.get("export.error", ex.getMessage()),
+                        "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -471,12 +493,12 @@ public class SwingApp {
                     Desktop.getDesktop().browse(file.toURI());
                 }
                 JOptionPane.showMessageDialog(frame,
-                    LanguageManager.get("export.pdf.hint") + "\n\n" +
-                    LanguageManager.get("export.success", file.getAbsolutePath()));
+                        LanguageManager.get("export.pdf.hint") + "\n\n" +
+                                LanguageManager.get("export.success", file.getAbsolutePath()));
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(frame,
-                    LanguageManager.get("export.error", ex.getMessage()),
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                        LanguageManager.get("export.error", ex.getMessage()),
+                        "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -503,12 +525,11 @@ public class SwingApp {
             // No local results → offer AI search
             statusLabel.setText(LanguageManager.get("status.no_results", query));
             int choice = JOptionPane.showConfirmDialog(
-                frame,
-                LanguageManager.get("search.not_found"),
-                "AI Search",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-            );
+                    frame,
+                    LanguageManager.get("search.not_found"),
+                    "AI Search",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
             if (choice == JOptionPane.YES_OPTION) {
                 doAiSearch(query);
             }
@@ -527,38 +548,43 @@ public class SwingApp {
         String apiKey = AiEnhancer.loadApiKey();
         if (apiKey == null) {
             JOptionPane.showMessageDialog(frame,
-                LanguageManager.get("ai.no_key"),
-                LanguageManager.get("ai.title"),
-                JOptionPane.INFORMATION_MESSAGE);
+                    LanguageManager.get("ai.no_key"),
+                    LanguageManager.get("ai.title"),
+                    JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
         statusLabel.setText(LanguageManager.get("search.ai_prompt", query));
         SwingWorker<String[], Void> worker = new SwingWorker<>() {
-            @Override protected String[] doInBackground() {
+            @Override
+            protected String[] doInBackground() {
                 return AiEnhancer.searchTerm(query, apiKey);
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     String[] result = get();
                     if (result != null) {
                         // Show result and ask if user wants to add it
                         String msg = "Term: " + result[0] + "\nDefinition: " + result[1] +
-                            (result[2].isEmpty() ? "" : "\nExample: " + result[2]) +
-                            (result[3].isEmpty() ? "" : "\nNotes: " + result[3]);
+                                (result[2].isEmpty() ? "" : "\nExample: " + result[2]) +
+                                (result[3].isEmpty() ? "" : "\nNotes: " + result[3]);
                         int add = JOptionPane.showConfirmDialog(frame,
-                            msg + "\n\nAdd this word to your list?",
-                            "AI Search Result",
-                            JOptionPane.YES_NO_OPTION);
+                                msg + "\n\nAdd this word to your list?",
+                                "AI Search Result",
+                                JOptionPane.YES_NO_OPTION);
                         if (add == JOptionPane.YES_OPTION) {
                             sys.addVocab(result[0], result[1], result[3], result[2]);
                             refreshTable();
                         }
                     } else {
-                        JOptionPane.showMessageDialog(frame, "No result found.", "AI Search", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(frame, "No result found.", "AI Search",
+                                JOptionPane.INFORMATION_MESSAGE);
                     }
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(frame, "AI search error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(frame, "AI search error: " + ex.getMessage(), "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
                 statusLabel.setText(LanguageManager.get("status.ready"));
             }
@@ -580,17 +606,18 @@ public class SwingApp {
         String apiKey = AiEnhancer.loadApiKey();
         if (apiKey == null) {
             JOptionPane.showMessageDialog(frame,
-                LanguageManager.get("ai.no_key"),
-                LanguageManager.get("ai.title"),
-                JOptionPane.INFORMATION_MESSAGE);
+                    LanguageManager.get("ai.no_key"),
+                    LanguageManager.get("ai.title"),
+                    JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
         int confirm = JOptionPane.showConfirmDialog(frame,
-            LanguageManager.get("ai.confirm", vocabs.size()),
-            LanguageManager.get("ai.title"),
-            JOptionPane.YES_NO_OPTION);
-        if (confirm != JOptionPane.YES_OPTION) return;
+                LanguageManager.get("ai.confirm", vocabs.size()),
+                LanguageManager.get("ai.title"),
+                JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION)
+            return;
 
         // Progress dialog
         JDialog progressDialog = new JDialog(frame, LanguageManager.get("ai.title"), false);
@@ -604,16 +631,17 @@ public class SwingApp {
         progressDialog.setLocationRelativeTo(frame);
 
         SwingWorker<Integer, Integer> worker = new SwingWorker<>() {
-            @Override protected Integer doInBackground() {
+            @Override
+            protected Integer doInBackground() {
                 int updated = 0;
                 int batchSize = 10;
-                
+
                 for (int i = 0; i < vocabs.size(); i += batchSize) {
                     int end = Math.min(i + batchSize, vocabs.size());
                     List<Vocab> batch = vocabs.subList(i, end);
-                    
+
                     Map<String, String[]> results = AiEnhancer.enhanceVocabBatch(batch, apiKey);
-                    
+
                     if (results != null) {
                         for (Vocab v : batch) {
                             String[] enhanced = results.get(v.getTerm().toLowerCase());
@@ -628,25 +656,28 @@ public class SwingApp {
                     }
                     publish(end);
                 }
-                
+
                 sys.forceSave();
                 return updated;
             }
 
-            @Override protected void process(java.util.List<Integer> chunks) {
+            @Override
+            protected void process(java.util.List<Integer> chunks) {
                 int progress = chunks.get(chunks.size() - 1);
                 bar.setValue(progress);
                 bar.setString(progress + " / " + vocabs.size());
             }
 
-            @Override protected void done() {
+            @Override
+            protected void done() {
                 progressDialog.dispose();
                 try {
                     int updated = get();
                     refreshTable();
                     JOptionPane.showMessageDialog(frame, LanguageManager.get("ai.done", updated));
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage(), "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         };
@@ -669,24 +700,26 @@ public class SwingApp {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
-        JTextField txtTerm  = new JTextField();
-        JTextField txtDef   = new JTextField();
-        JTextField txtEx    = new JTextField();
+        JTextField txtTerm = new JTextField();
+        JTextField txtDef = new JTextField();
+        JTextField txtEx = new JTextField();
         JTextField txtNotes = new JTextField();
 
         String[][] rows = {
-            { LanguageManager.get("col.term"),    "" },
-            { LanguageManager.get("col.def"),     "" },
-            { LanguageManager.get("col.example"), "" },
-            { LanguageManager.get("col.notes"),   "" }
+                { LanguageManager.get("col.term"), "" },
+                { LanguageManager.get("col.def"), "" },
+                { LanguageManager.get("col.example"), "" },
+                { LanguageManager.get("col.notes"), "" }
         };
         JTextField[] fields = { txtTerm, txtDef, txtEx, txtNotes };
 
         for (int i = 0; i < fields.length; i++) {
             gbc.gridy = i;
-            gbc.gridx = 0; gbc.weightx = 0.3;
+            gbc.gridx = 0;
+            gbc.weightx = 0.3;
             dialog.add(new JLabel(rows[i][0] + ":"), gbc);
-            gbc.gridx = 1; gbc.weightx = 0.7;
+            gbc.gridx = 1;
+            gbc.weightx = 0.7;
             fields[i].setFont(new Font("SansSerif", Font.PLAIN, 14));
             dialog.add(fields[i], gbc);
         }
@@ -694,31 +727,33 @@ public class SwingApp {
         JButton btnSave = new JButton(LanguageManager.get("dialog.add.save"));
         btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
         btnSave.addActionListener(e -> {
-            String t  = txtTerm.getText().trim();
-            String d  = txtDef.getText().trim();
+            String t = txtTerm.getText().trim();
+            String d = txtDef.getText().trim();
             String ex = txtEx.getText().trim();
-            String n  = txtNotes.getText().trim();
+            String n = txtNotes.getText().trim();
             if (!t.isEmpty() && !d.isEmpty()) {
                 if (sys.addVocab(t, d, n, ex)) {
                     refreshTable();
                     dialog.dispose();
                 } else {
                     JOptionPane.showMessageDialog(dialog,
-                        LanguageManager.get("msg.term_exists"), "Error", JOptionPane.ERROR_MESSAGE);
+                            LanguageManager.get("msg.term_exists"), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
                 JOptionPane.showMessageDialog(dialog,
-                    LanguageManager.get("msg.required"), "Warning", JOptionPane.WARNING_MESSAGE);
+                        LanguageManager.get("msg.required"), "Warning", JOptionPane.WARNING_MESSAGE);
             }
         });
 
         gbc.gridy = fields.length;
-        gbc.gridx = 0; gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
         gbc.insets = new Insets(12, 10, 10, 10);
         dialog.add(btnSave, gbc);
 
         // Enter on any field triggers save
-        for (JTextField f : fields) f.addActionListener(e -> btnSave.doClick());
+        for (JTextField f : fields)
+            f.addActionListener(e -> btnSave.doClick());
 
         dialog.setVisible(true);
     }
@@ -728,7 +763,7 @@ public class SwingApp {
         if (row != -1) {
             String term = (String) tableModel.getValueAt(row, 0);
             int confirm = JOptionPane.showConfirmDialog(frame,
-                LanguageManager.get("msg.confirm_delete", term), "Confirm", JOptionPane.YES_NO_OPTION);
+                    LanguageManager.get("msg.confirm_delete", term), "Confirm", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 sys.deleteVocab(term);
                 refreshTable();
@@ -740,8 +775,8 @@ public class SwingApp {
 
     private void clearAllData() {
         int confirm = JOptionPane.showConfirmDialog(frame,
-            LanguageManager.get("msg.confirm_reset"),
-            "Reset All", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                LanguageManager.get("msg.confirm_reset"),
+                "Reset All", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (confirm == JOptionPane.YES_OPTION) {
             sys.clearAllData();
             refreshTable();
@@ -753,10 +788,10 @@ public class SwingApp {
     // ─────────────────────────────────────────────────────────────────────────
 
     private void showDetailDialog(int row) {
-        String term    = (String) tableModel.getValueAt(row, 0);
-        String def     = (String) tableModel.getValueAt(row, 1);
+        String term = (String) tableModel.getValueAt(row, 0);
+        String def = (String) tableModel.getValueAt(row, 1);
         String example = (String) tableModel.getValueAt(row, 2);
-        String notes   = (String) tableModel.getValueAt(row, 3);
+        String notes = (String) tableModel.getValueAt(row, 3);
 
         JDialog detail = new JDialog(frame, LanguageManager.get("detail.title", term), false);
         detail.setSize(520, 340);
@@ -847,7 +882,10 @@ public class SwingApp {
     /** Renders cell text truncated to maxLength chars, showing '…' if truncated. */
     private static class TruncatedCellRenderer extends DefaultTableCellRenderer {
         private final int maxLength;
-        TruncatedCellRenderer(int maxLength) { this.maxLength = maxLength; }
+
+        TruncatedCellRenderer(int maxLength) {
+            this.maxLength = maxLength;
+        }
 
         @Override
         public Component getTableCellRendererComponent(
@@ -858,7 +896,7 @@ public class SwingApp {
                 String s = value.toString();
                 if (s.length() > maxLength) {
                     setText(s.substring(0, maxLength) + "…");
-                    setToolTipText("<html><body style='width:320px'>" + s.replace("<","&lt;") + "</body></html>");
+                    setToolTipText("<html><body style='width:320px'>" + s.replace("<", "&lt;") + "</body></html>");
                 } else {
                     setText(s);
                     setToolTipText(null);
@@ -870,9 +908,9 @@ public class SwingApp {
 
     /** Alternating row background colors. */
     private static class AlternatingRowRenderer extends DefaultTableCellRenderer {
-        private static final Color ODD  = new Color(248, 248, 255);
+        private static final Color ODD = new Color(248, 248, 255);
         private static final Color EVEN = Color.WHITE;
-        private static final Color SEL  = new Color(210, 210, 240);
+        private static final Color SEL = new Color(210, 210, 240);
 
         @Override
         public Component getTableCellRendererComponent(
